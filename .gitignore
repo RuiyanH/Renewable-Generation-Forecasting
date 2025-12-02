@@ -1,0 +1,23 @@
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+
+# Data artifacts
+data/processed/**/*
+figures/**/*
+*.parquet
+*.feather
+*.sqlite
+*time_series_60min_singleindex.csv
+
+# Python packaging/build
+build/
+dist/
+*.egg-info/
+
+
+

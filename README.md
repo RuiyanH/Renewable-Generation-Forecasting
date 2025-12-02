@@ -67,8 +67,33 @@ I also examine model performance on:
 1) Create and activate a Python 3.10+ environment.
 2) Install dependencies:
    pip install -r requirements.txt
-3) Put your raw data files in the project root or follow data/README.md to fetch from public sources. Example file expected by notebooks: time_series_60min_singleindex.csv
+3) Download the OPSD dataset (time_series_60min_singleindex.csv):
+   - Website: Open Power System Data (Time series) — `https://data.open-power-system-data.org/time_series/`
+   - File: time_series_60min_singleindex.csv (Germany columns included: DE_load_actual_entsoe_transparency, DE_solar_generation_actual, DE_wind_generation_actual)
+   - Place the file at `data/time_series_60min_singleindex.csv`
+   - Example via curl:
+     curl -L -o data/time_series_60min_singleindex.csv "https://data.open-power-system-data.org/time_series/latest/time_series_60min_singleindex.csv"
 4) Open the notebooks in notebooks/ and run them top-to-bottom.
+   - If paths differ, update the DATA_PATH/RAW_PATH at the top of the notebooks.
+
+### Data notes
+- Loader: `src.data.load_opsd_germany(path)` parses `utc_timestamp` and returns columns `['load', 'solar', 'wind']` from the DE columns.
+- Feature pipeline: `src.features.make_features(df, horizon=H)` builds lags (1/2/24/168), rolling stats, and calendar features, returns (X, y).
+- Large files are ignored by `.gitignore` (CSV, parquet, figures, processed data). Keep raw data locally; don’t commit it.
+
+### Pushing to GitHub with large files
+If you accidentally committed large binaries (CSV/figures/parquet) and pushes time out:
+1) Ensure `.gitignore` matches this repo (CSV, parquet, figures, processed data).
+2) Rewrite history to drop large paths (install git-filter-repo via Homebrew or pipx):
+   - brew install git-filter-repo
+   - git filter-repo --path-glob 'figures/**' --invert-paths --force
+   - git filter-repo --path-glob 'data/processed/**' --invert-paths --force
+   - git filter-repo --path-glob '*.parquet' --invert-paths --force
+   - git filter-repo --path-glob '*time_series_60min_singleindex.csv' --invert-paths --force
+   - git reflog expire --expire=now --all && git gc --prune=now --aggressive
+3) Push cleaned history:
+   - git push -u origin main --force
+4) Optional: use Git LFS to version big binaries instead of regular git.
 
 ### Results
 For 1-hour-ahead load forecasting, the gradient-boosted model reduces RMSE by approximately X% and MAE by Y% relative to a persistence baseline, and also outperforms the same-hour-last-week heuristic. Direct quantile regression yields 80% prediction intervals whose empirical coverage is close to the nominal level (about Z%) with relatively narrow average widths, while conformal prediction achieves roughly (target-level) coverage for 90% intervals at the cost of somewhat wider bands.
